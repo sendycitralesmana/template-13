@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blueprint Deploy — Laravel 13 + Inertia + React → VPS Production</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+:root{
+  --bg-base:#0A1929;
+  --bg-panel:#0F2438;
+  --bg-panel-raised:#123049;
+  --line-cyan:#4FD1E8;
+  --line-cyan-dim:#2A6478;
+  --grid-line:rgba(79,209,232,0.07);
+  --text-primary:#E8F1F5;
+  --text-secondary:#8FA8B8;
+  --text-dim:#5C7A8C;
+  --amber:#F5A623;
+  --green:#5FD68C;
+  --red:#EC6A6A;
+  --purple:#B79CF0;
+  --mono:'IBM Plex Mono',monospace;
+  --sans:'IBM Plex Sans',sans-serif;
+}
+
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  background:
+    linear-gradient(var(--grid-line) 1px, transparent 1px) 0 0/40px 40px,
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px) 0 0/40px 40px,
+    var(--bg-base);
+  color:var(--text-primary);
+  font-family:var(--sans);
+  line-height:1.65;
+  font-size:16px;
+}
+
+::selection{background:var(--line-cyan);color:var(--bg-base);}
+
+a{color:var(--line-cyan);}
+
+/* ---------- Layout shell ---------- */
+.page{max-width:1180px;margin:0 auto;padding:0 24px 120px;}
+
+/* ---------- Corner-bracket panel (signature element) ---------- */
+.panel{
+  position:relative;
+  background:var(--bg-panel);
+  border:1px solid var(--line-cyan-dim);
+  padding:32px;
+  margin:28px 0;
+}
+.panel::before,.panel::after,
+.panel .bl,.panel .br{
+  content:"";
+  position:absolute;
+  width:14px;height:14px;
+  border:2px solid var(--line-cyan);
+}
+.panel::before{top:-1px;left:-1px;border-right:none;border-bottom:none;}
+.panel::after{top:-1px;right:-1px;border-left:none;border-bottom:none;}
+.panel .bl{bottom:-1px;left:-1px;border-right:none;border-top:none;}
+.panel .br{bottom:-1px;right:-1px;border-left:none;border-top:none;}
+
+/* ---------- Header / hero ---------- */
+.hero{
+  padding:64px 24px 40px;
+  max-width:1180px;
+  margin:0 auto;
+  position:relative;
+}
+.eyebrow{
+  font-family:var(--mono);
+  color:var(--line-cyan);
+  font-size:13px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.eyebrow::before{content:"◆";font-size:10px;}
+h1.title{
+  font-family:var(--mono);
+  font-weight:700;
+  font-size:clamp(28px,5vw,52px);
+  line-height:1.1;
+  margin:16px 0 8px;
+  letter-spacing:-0.01em;
+}
+h1.title .accent{color:var(--line-cyan);}
+.subtitle{
+  color:var(--text-secondary);
+  font-size:18px;
+  max-width:760px;
+  margin:0 0 28px;
+}
+.stack-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;}
+.chip{
+  font-family:var(--mono);
+  font-size:12px;
+  color:var(--text-secondary);
+  border:1px solid var(--line-cyan-dim);
+  padding:5px 11px;
+  border-radius:2px;
+  background:rgba(79,209,232,0.04);
+}
+
+/* ---------- Stamp badges ---------- */
+.stamp{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-family:var(--mono);
+  font-size:11px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  padding:4px 10px;
+  border:1.5px solid currentColor;
+  border-radius:3px;
+  transform:rotate(-1.2deg);
+}
+.stamp.amber{color:var(--amber);}
+.stamp.red{color:var(--red);}
+.stamp.green{color:var(--green);}
+
+/* ---------- Section headers ---------- */
+.section-label{
+  font-family:var(--mono);
+  color:var(--text-dim);
+  font-size:13px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  margin:64px 0 4px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.section-label::after{content:"";flex:1;height:1px;background:var(--line-cyan-dim);}
+h2.section-title{
+  font-family:var(--mono);
+  font-size:clamp(22px,3.2vw,32px);
+  margin:0 0 24px;
+}
+
+/* ---------- Stage cards ---------- */
+.stage{
+  border:1px solid var(--line-cyan-dim);
+  background:var(--bg-panel);
+  margin:16px 0;
+  position:relative;
+}
+.stage > summary{
+  list-style:none;
+  cursor:pointer;
+  padding:20px 24px;
+  display:flex;
+  align-items:center;
+  gap:18px;
+  font-family:var(--mono);
+  font-weight:600;
+  font-size:16px;
+  user-select:none;
+}
+.stage > summary::-webkit-details-marker{display:none;}
+.stage-num{
+  flex:none;
+  width:44px;height:44px;
+  border:1.5px solid var(--line-cyan);
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--line-cyan);
+  font-size:15px;
+}
+.stage-loc{
+  margin-left:auto;
+  font-size:11px;
+  font-weight:500;
+  color:var(--text-dim);
+  border:1px solid var(--line-cyan-dim);
+  padding:4px 10px;
+  border-radius:2px;
+  white-space:nowrap;
+}
+.stage-caret{transition:transform .2s ease;color:var(--text-dim);flex:none;}
+.stage[open] .stage-caret{transform:rotate(90deg);}
+.stage-body{padding:0 24px 28px 86px;}
+.stage-body p{color:var(--text-secondary);}
+.stage-body h4{
+  font-family:var(--mono);
+  font-size:13px;
+  color:var(--line-cyan);
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  margin:22px 0 10px;
+}
+.stage-body h4:first-child{margin-top:4px;}
+
+/* ---------- Code blocks ---------- */
+.code-wrap{
+  background:#081420;
+  border:1px solid var(--line-cyan-dim);
+  border-radius:4px;
+  margin:10px 0 16px;
+  overflow:hidden;
+}
+.code-wrap .code-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:7px 14px;
+  background:rgba(79,209,232,0.06);
+  border-bottom:1px solid var(--line-cyan-dim);
+  font-family:var(--mono);
+  font-size:11px;
+  color:var(--text-dim);
+  letter-spacing:.05em;
+}
+.code-wrap pre{
+  margin:0;
+  padding:14px 16px;
+  overflow-x:auto;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:13.5px;
+  color:#BEEAF2;
+  line-height:1.6;
+}
+.code-wrap code .cmt{color:var(--text-dim);}
+.code-wrap.sql pre{color:#F6D9A0;}
+.code-wrap.ini pre{color:#C9E8B0;}
+
+/* ---------- Callouts ---------- */
+.callout{
+  border-left:3px solid var(--line-cyan);
+  background:rgba(79,209,232,0.05);
+  padding:12px 16px;
+  margin:14px 0;
+  font-size:14.5px;
+  color:var(--text-secondary);
+  border-radius:0 4px 4px 0;
+}
+.callout b{color:var(--text-primary);}
+.callout.warn{border-color:var(--amber);background:rgba(245,166,35,0.07);}
+.callout.danger{border-color:var(--red);background:rgba(236,106,106,0.07);}
+.callout.ok{border-color:var(--green);background:rgba(95,214,140,0.07);}
+
+/* ---------- Output/expect boxes ---------- */
+.output-box{
+  font-family:var(--mono);
+  font-size:13px;
+  background:#050C14;
+  border:1px dashed var(--line-cyan-dim);
+  color:var(--text-secondary);
+  padding:10px 14px;
+  border-radius:3px;
+  margin:8px 0 16px;
+  white-space:pre-wrap;
+}
+
+/* ---------- Error/solution table ---------- */
+.err-item{
+  display:grid;
+  grid-template-columns:20px 1fr;
+  gap:8px;
+  margin:8px 0;
+  font-size:14.5px;
+}
+.err-item .ico{color:var(--red);}
+.err-item.sol .ico{color:var(--green);}
+.err-item b{color:var(--text-primary);}
+
+/* ---------- Checklist ---------- */
+ul.checklist{list-style:none;padding:0;margin:14px 0;}
+ul.checklist li{
+  display:flex;gap:10px;align-items:flex-start;
+  padding:6px 0;
+  color:var(--text-secondary);
+  font-size:14.5px;
+}
+ul.checklist li::before{
+  content:"";
+  flex:none;
+  width:16px;height:16px;
+  margin-top:3px;
+  border:1.5px solid var(--line-cyan);
+  border-radius:3px;
+}
+
+/* ---------- TOC nav ---------- */
+.toc{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+  gap:10px;
+  margin:20px 0 8px;
+}
+.toc a{
+  font-family:var(--mono);
+  font-size:13px;
+  text-decoration:none;
+  color:var(--text-secondary);
+  border:1px solid var(--line-cyan-dim);
+  padding:10px 12px;
+  display:flex;
+  gap:8px;
+  border-radius:2px;
+  transition:.15s;
+}
+.toc a:hover{border-color:var(--line-cyan);color:var(--text-primary);background:rgba(79,209,232,0.05);}
+.toc a span.n{color:var(--line-cyan);}
+
+/* ---------- Diagram figure ---------- */
+figure.diagram{margin:20px 0 28px;text-align:center;}
+figure.diagram figcaption{
+  font-family:var(--mono);
+  font-size:12px;
+  color:var(--text-dim);
+  margin-top:10px;
+  letter-spacing:.04em;
+}
+svg{max-width:100%;height:auto;display:block;margin:0 auto;}
+
+/* ---------- Footer ---------- */
+footer{
+  margin-top:80px;
+  padding:32px 0;
+  border-top:1px solid var(--line-cyan-dim);
+  color:var(--text-dim);
+  font-family:var(--mono);
+  font-size:12.5px;
+  text-align:center;
+}
+
+@media(max-width:640px){
+  .stage-body{padding:0 16px 24px 16px;}
+  .stage > summary{flex-wrap:wrap;padding:16px;}
+  .stage-loc{margin-left:0;}
+  .hero{padding:40px 16px 24px;}
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="eyebrow">Dokumen Teknis · Deployment Blueprint</div>
+  <h1 class="title">Dari <span class="accent">GitHub</span> ke Production<br>di balik <span class="accent">HTTPS://</span></h1>
+  <p class="subtitle">Panduan lengkap, visual, dan step-by-step untuk deploy aplikasi <b>Laravel 13 + Inertia.js + React TypeScript</b> ke VPS Ubuntu — dari clone repository sampai aplikasi hidup di domain sendiri dengan sertifikat SSL. Database PostgreSQL dikelola manual lewat pgAdmin, migration tidak dijalankan otomatis.</p>
+  <div class="stack-chips">
+    <span class="chip">Laravel 13</span>
+    <span class="chip">PHP 8.3</span>
+    <span class="chip">Inertia.js</span>
+    <span class="chip">React + TS</span>
+    <span class="chip">Vite</span>
+    <span class="chip">PostgreSQL</span>
+    <span class="chip">Nginx</span>
+    <span class="chip">PHP-FPM</span>
+    <span class="chip">Let's Encrypt</span>
+    <span class="chip">Ubuntu VPS</span>
+  </div>
+</div>
+
+<div class="page">
+
+<!-- ================= HERO DIAGRAM: ARCHITECTURE BLUEPRINT ================= -->
+<div class="panel"><span class="bl"></span><span class="br"></span>
+<h2 class="section-title" style="margin-top:0">Peta Alur Deployment</h2>
+<p style="color:var(--text-secondary);margin-top:-12px;">Skema besar dari kode sampai bisa diakses publik. Setiap kotak akan dibahas detail di tahap masing-masing.</p>
+
+<figure class="diagram">
+<svg viewBox="0 0 1000 420" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#4FD1E8"/>
+    </marker>
+  </defs>
+  <!-- connectors -->
+  <path d="M120,60 L220,60" stroke="#4FD1E8" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+  <path d="M310,80 L310,140" stroke="#4FD1E8" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+  <path d="M310,210 L310,260" stroke="#4FD1E8" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+  <path d="M400,290 L470,290" stroke="#4FD1E8" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+  <path d="M400,340 L470,340" stroke="#F5A623" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+  <path d="M600,290 L670,290" stroke="#4FD1E8" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+  <path d="M760,270 L820,180" stroke="#4FD1E8" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+  <path d="M880,150 L880,90" stroke="#5FD68C" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+
+  <!-- GitHub -->
+  <rect x="10" y="30" width="110" height="60" rx="3" fill="none" stroke="#4FD1E8" stroke-width="1.5"/>
+  <text x="65" y="55" text-anchor="middle" fill="#E8F1F5" font-family="IBM Plex Mono" font-size="13" font-weight="600">GitHub</text>
+  <text x="65" y="72" text-anchor="middle" fill="#8FA8B8" font-family="IBM Plex Mono" font-size="10">public / private</text>
+
+  <!-- VPS box (big container) -->
+  <rect x="220" y="20" width="620" height="360" rx="3" fill="none" stroke="#2A6478" stroke-width="1"/>
+  <text x="236" y="14" fill="#5C7A8C" font-family="IBM Plex Mono" font-size="11" letter-spacing="1">VPS UBUNTU</text>
+
+  <!-- clone/setup -->
+  <rect x="250" y="30" width="120" height="50" rx="3" fill="none" stroke="#4FD1E8" stroke-width="1.5"/>
+  <text x="310" y="50" text-anchor="middle" fill="#E8F1F5" font-family="IBM Plex Mono" font-size="12">git clone</text>
+  <text x="310" y="65" text-anchor="middle" fill="#8FA8B8" font-family="IBM Plex Mono" font-size="10">composer · npm</text>
+
+  <!-- build -->
+  <rect x="250" y="140" width="120" height="70" rx="3" fill="none" stroke="#4FD1E8" stroke-width="1.5"/>
+  <text x="310" y="165" text-anchor="middle" fill="#E8F1F5" font-family="IBM Plex Mono" font-size="12">vite build</text>
+  <text x="310" y="181" text-anchor="middle" fill="#8FA8B8" font-family="IBM Plex Mono" font-size="10">React + TS</text>
+  <text x="310" y="196" text-anchor="middle" fill="#8FA8B8" font-family="IBM Plex Mono" font-size="10">→ public/build</text>
+
+  <!-- .env -->
+  <rect x="250" y="260" width="150" height="70" rx="3" fill="none" stroke="#4FD1E8" stroke-width="1.5"/>
+  <text x="325" y="284" text-anchor="middle" fill="#E8F1F5" font-family="IBM Plex Mono" font-size="12">.env config</text>
+  <text x="325" y="300" text-anchor="middle" fill="#8FA8B8" font-family="IBM Plex Mono" font-size="10">DB_HOST / DB_USER</text>
+  <text x="325" y="315" text-anchor="middle" fill="#F5A623" font-family="IBM Plex Mono" font-size="9.5">no migrate</text>
+
+  <!-- Nginx + PHP-FPM -->
+  <rect x="470" y="260" width="130" height="50" rx="3" fill="none" stroke="#4FD1E8" stroke-width="1.5"/>
+  <text x="535" y="280" text-anchor="middle" fill="#E8F1F5" font-family="IBM Plex Mono" font-size="12">Nginx</text>
+  <text x="535" y="296" text-anchor="middle" fill="#8FA8B8" font-family="IBM Plex Mono" font-size="10">+ PHP-FPM</text>
+
+  <!-- PostgreSQL external -->
+  <rect x="470" y="315" width="130" height="55" rx="3" fill="none" stroke="#F5A623" stroke-width="1.5" stroke-dasharray="3 2"/>
+  <text x="535" y="337" text-anchor="middle" fill="#E8F1F5" font-family="IBM Plex Mono" font-size="12">PostgreSQL</text>
+  <text x="535" y="352" text-anchor="middle" fill="#F5A623" font-family="IBM Plex Mono" font-size="9.5">dibuat via pgAdmin</text>
+  <text x="600" y="335" fill="#8FA8B8" font-family="IBM Plex Mono" font-size="9" transform="rotate(0)"></text>
+
+  <!-- Domain -->
+  <rect x="670" y="260" width="90" height="60" rx="3" fill="none" stroke="#4FD1E8" stroke-width="1.5"/>
+  <text x="715" y="284" text-anchor="middle" fill="#E8F1F5" font-family="IBM Plex Mono" font-size="12">Domain</text>
+  <text x="715" y="300" text-anchor="middle" fill="#8FA8B8" font-family="IBM Plex Mono" font-size="10">DNS A-record</text>
+
+  <!-- SSL -->
+  <rect x="820" y="130" width="140" height="55" rx="3" fill="none" stroke="#5FD68C" stroke-width="1.5"/>
+  <text x="890" y="152" text-anchor="middle" fill="#E8F1F5" font-family="IBM Plex Mono" font-size="12">Certbot SSL</text>
+  <text x="890" y="168" text-anchor="middle" fill="#8FA8B8" font-family="IBM Plex Mono" font-size="10">Let's Encrypt</text>
+
+  <!-- HTTPS output -->
+  <rect x="820" y="40" width="140" height="50" rx="3" fill="rgba(95,214,140,0.08)" stroke="#5FD68C" stroke-width="1.8"/>
+  <text x="890" y="62" text-anchor="middle" fill="#5FD68C" font-family="IBM Plex Mono" font-size="13" font-weight="700">🔒 HTTPS</text>
+  <text x="890" y="78" text-anchor="middle" fill="#8FA8B8" font-family="IBM Plex Mono" font-size="9.5">domain-saya.com</text>
+</svg>
+</figure>
+<p style="color:var(--text-dim);font-size:13px;font-family:var(--mono);margin:0;">Garis putus-putus kuning menandakan jalur yang <b style="color:var(--amber);">tidak</b> dieksekusi otomatis oleh script — database & migration dikendalikan manual oleh Anda.</p>
+</div>
+
+<!-- ================= JAWABAN CEPAT: ROOT VS USER ================= -->
+<div class="section-label">Referensi Cepat</div>
+<h2 class="section-title">Root vs User Baru — Mana yang Dipakai?</h2>
+
+<figure class="diagram">
+<svg viewBox="0 0 900 220" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrow2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#4FD1E8"/>
+    </marker>
+  </defs>
+  <rect x="20" y="70" width="150" height="60" rx="3" fill="none" stroke="#EC6A6A" stroke-width="1.5"/>
+  <text x="95" y="95" text-anchor="middle" fill="#E8F1F5" font-family="IBM Plex Mono" font-size="13">root</text>
+  <text x="95" y="112" text-anchor="middle" fill="#8FA8B8" font-family="IBM Plex Mono" font-size="9.5">login pertama saja</text>
+
+  <path d="M170,100 L260,100" stroke="#4FD1E8" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow2)"/>
+  <text x="215" y="90" text-anchor="middle" fill="#8FA8B8" font-family="IBM Plex Mono" font-size="9">adduser + usermod -aG sudo</text>
+
+  <rect x="260" y="60" width="180" height="80" rx="3" fill="rgba(79,209,232,0.06)" stroke="#4FD1E8" stroke-width="1.8"/>
+  <text x="350" y="90" text-anchor="middle" fill="#E8F1F5" font-family="IBM Plex Mono" font-size="13" font-weight="700">sendy (sudo)</text>
+  <text x="350" y="108" text-anchor="middle" fill="#8FA8B8" font-family="IBM Plex Mono" font-size="9.5">dipakai seterusnya</text>
+  <text x="350" y="122" text-anchor="middle" fill="#5FD68C" font-family="IBM Plex Mono" font-size="9.5">✓ untuk semua operasional</text>
+
+  <path d="M440,100 L560,100" stroke="#4FD1E8" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow2)"/>
+
+  <rect x="560" y="30" width="320" height="160" rx="3" fill="none" stroke="#2A6478" stroke-width="1"/>
+  <text x="576" y="24" fill="#5C7A8C" font-family="IBM Plex Mono" font-size="10" letter-spacing="1">TUGAS SEHARI-HARI</text>
+  <text x="580" y="55" fill="#E8F1F5" font-family="IBM Plex Mono" font-size="11">• git clone / git pull</text>
+  <text x="580" y="78" fill="#E8F1F5" font-family="IBM Plex Mono" font-size="11">• composer / npm install</text>
+  <text x="580" y="101" fill="#E8F1F5" font-family="IBM Plex Mono" font-size="11">• edit .env, artisan command</text>
+  <text x="580" y="124" fill="#E8F1F5" font-family="IBM Plex Mono" font-size="11">• sudo systemctl restart nginx</text>
+  <text x="580" y="147" fill="#8FA8B8" font-family="IBM Plex Mono" font-size="10">(butuh sudo → aman, ada jeda</text>
+  <text x="580" y="164" fill="#8FA8B8" font-family="IBM Plex Mono" font-size="10">konfirmasi password)</text>
+</svg>
+</figure>
+
+<div class="callout ok"><b>Rekomendasi:</b> login sebagai <code>root</code> hanya sekali di awal untuk membuat user baru (<code>sendy</code>) dengan hak <code>sudo</code>. Setelah itu, <b>semua aktivitas</b> — clone, build, edit config, restart service — dilakukan sebagai user <code>sendy</code>, memakai <code>sudo</code> hanya saat butuh hak admin. Ini standar praktik keamanan server production.</div>
+
+<div class="toc">
+  <a href="#t0"><span class="n">00</span> Persiapan</a>
+  <a href="#t1"><span class="n">01</span> Login & User Baru</a>
+  <a href="#t2"><span class="n">02</span> Update & Firewall</a>
+  <a href="#t3"><span class="n">03</span> Install Git</a>
+  <a href="#t4"><span class="n">04</span> Akses GitHub (Public/Private)</a>
+  <a href="#t5"><span class="n">05</span> Install PHP 8.3</a>
+  <a href="#t6"><span class="n">06</span> Install Composer</a>
+  <a href="#t7"><span class="n">07</span> Install Node.js</a>
+  <a href="#t8"><span class="n">08</span> User PostgreSQL</a>
+  <a href="#t9"><span class="n">09</span> Database via pgAdmin</a>
+  <a href="#t10"><span class="n">10</span> Clone Project</a>
+  <a href="#t11"><span class="n">11</span> Konfigurasi .env</a>
+  <a href="#t12"><span class="n">12</span> Composer Install</a>
+  <a href="#t13"><span class="n">13</span> Build Vite</a>
+  <a href="#t14"><span class="n">14</span> Cek Koneksi DB</a>
+  <a href="#t15"><span class="n">15</span> Permission & Storage</a>
+  <a href="#t16"><span class="n">16</span> Konfigurasi Nginx</a>
+  <a href="#t17"><span class="n">17</span> Konfigurasi PHP-FPM</a>
+  <a href="#t18"><span class="n">18</span> Queue Worker</a>
+  <a href="#t19"><span class="n">19</span> Domain / DNS</a>
+  <a href="#t20"><span class="n">20</span> SSL / HTTPS</a>
+  <a href="#t21"><span class="n">21</span> Testing Production</a>
+  <a href="#t22"><span class="n">22</span> Update (git pull)</a>
+  <a href="#t23"><span class="n">23</span> Troubleshooting</a>
+  <a href="#t24"><span class="n">24</span> Checklist Final</a>
+</div>
+
+<!-- ================= STAGES ================= -->
+<div class="section-label">Panduan Lengkap</div>
+<h2 class="section-title">25 Tahap, Dari Nol Sampai Live</h2>
+
+<!-- T0 -->
+<details class="stage" id="t0" open>
+<summary><span class="stage-num">00</span> Persiapan<span class="stage-loc">📋 Checklist</span><svg class="stage-caret" width="16" height="16" viewBox="0 0 16 16"><path d="M5 2l7 6-7 6" stroke="currentColor" fill="none" stroke-width="2"/></svg></summary>
+<div class="stage-body">
+<p>Pastikan semua ini siap sebelum mulai, supaya proses tidak terhenti di tengah jalan.</p>
+<ul class="checklist">
+<li>IP VPS dan akses SSH (password root atau SSH key)</li>
+<li>Domain sudah dibeli, dan Anda punya akses ke pengaturan DNS-nya</li>
+<li>URL repository GitHub — dan Anda tahu apakah <b style="color:var(--text-primary)">public</b> atau <b style="color:var(--text-primary)">private</b></li>
+<li>Jika private: siapkan Personal Access Token, atau siap membuat SSH key baru</li>
+<li>Akses ke server PostgreSQL yang dipakai (di VPS ini atau server terpisah)</li>
+<li>VPS Ubuntu 22.04/24.04 LTS, RAM minimal 2GB (idealnya 4GB untuk build Vite)</li>
+</ul>
+<div class="callout"><b>Catatan penting:</b> Panduan ini mengasumsikan database <b>sudah dibuat manual lewat pgAdmin</b>, dan <code>php artisan migrate</code> <b>tidak akan pernah dijalankan</b> — schema database dianggap sudah siap sebelumnya.</div>
+</div>
+</details>
+
+<!-- T1 -->
+<details class="stage" id="t1">
+<summary><span class="stage-num">01</span> Login VPS & Membuat User Baru<span class="stage-loc">📍 Terminal lokal → VPS</span><svg class="stage-caret" width="16" height="16" viewBox="0 0 16 16"><path d="M5 2l7 6-7 6" stroke="currentColor" fill="none" stroke-width="2"/></svg></summary>
+<div class="stage-body">
+<p><b>Tujuan:</b> Login pertama sebagai <code>root</code>, segera buat user baru dengan hak <code>sudo</code>. Root sebaiknya tidak dipakai untuk operasional harian.</p>
+
+<h4>📍 Jalankan di: Komputer lokal</h4>
+<div class="code-wrap"><div class="code-head">bash</div><pre>ssh root@IP_VPS_ANDA</pre></div>
+
+<h4>📍 Jalankan di: Terminal VPS (sebagai root)</h4>
+<div class="code-wrap"><div class="code-head">1 — buat user baru</div><pre>adduser sendy</pre></div>
+<div class="code-wrap"><div class="code-head">2 — beri hak sudo</div><pre>usermod -aG sudo sendy</pre></div>
+<div class="code-wrap"><div class="code-head">3 — (opsional) salin SSH key ke user baru</div><pre>rsync --archive --chown=sendy:sendy ~/.ssh /home/sendy</pre></div>
+<div class="code-wrap"><div class="code-head">4 — keluar, login ulang sebagai sendy</div><pre>exit
+ssh sendy@IP_VPS_ANDA</pre></div>
+
+<h4>Cara mengecek berhasil</h4>
+<div class="code-wrap"><pre>whoami</pre></div>
+<div class="output-box">sendy</div>
+<div class="code-wrap"><pre>sudo whoami</pre></div>
+<div class="output-box">root   <span class="cmt"># setelah masukkan password sendy</span></div>
+
+<h4>Jika gagal</h4>
+<div class="err-item"><span class="ico">✕</span><span><b>sendy is not in the sudoers file</b></span></div>
+<div class="err-item sol"><span class="ico">✓</span><span>Login lagi sebagai root, ulangi <code>usermod -aG sudo sendy</code>, lalu logout-login ulang.</span></div>
+</div>
+</details>
+
+<!-- T2 -->
+<details class="stage" id="t2">
+<summary><span class="stage-num">02</span> Update Sistem & Firewall<span class="stage-loc">📍 Terminal VPS</span><svg class="stage-caret" width="16" height="16" viewBox="0 0 16 16"><path d="M5 2l7 6-7 6" stroke="currentColor" fill="none" stroke-width="2"/></svg></summary>
+<div class="stage-body">
+<p><b>Tujuan:</b> Update sistem dan hanya buka port yang diperlukan (SSH, HTTP, HTTPS).</p>
+<div class="code-wrap"><div class="code-head">1 — update sistem</div><pre>sudo apt update && sudo apt upgrade -y</pre></div>
+<div class="code-wrap"><div class="code-head">2 — aktifkan firewall UFW</div><pre>sudo apt install ufw -y
+sudo ufw allow OpenSSH
+sudo ufw allow 80
+sudo ufw allow 443
+sudo ufw enable</pre></div>
+<h4>Cara mengecek berhasil</h4>
+<div class="code-wrap"><pre>sudo ufw status</pre></div>
+<div class="output-box">Status: active
+22/tcp   ALLOW   Anywhere
+80       ALLOW   Anywhere
+443      ALLOW   Anywhere</div>
+<div class="callout danger"><b>Awas:</b> Selalu <code>ufw allow OpenSSH</code> <u>sebelum</u> <code>ufw enable</code> — kalau kebalik, Anda bisa terkunci dari SSH.</div>
+</div>
+</details>
+
+<!-- T3 -->
+<details class="stage" id="t3">
+<summary><span class="stage-num">03</span> Install Git<span class="stage-loc">📍 Terminal VPS</span><svg class="stage-caret" width="16" height="16" viewBox="0 0 16 16"><path d="M5 2l7 6-7 6" stroke="currentColor" fill="none" stroke-width="2"/></svg></summary>
+<div class="stage-body">
+<div class="code-wrap"><pre>sudo apt install git -y</pre></div>
+<h4>Cara mengecek berhasil</h4>
+<div class="code-wrap"><pre>git --version</pre></div>
+<div class="output-box">git version 2.43.0</div>
+</div>
+</details>
+
+<!-- T4 -->
+<details class="stage" id="t4">
+<summary><span class="stage-num">04</span> Setup Akses GitHub<span class="stage-loc">📍 Terminal VPS</span><svg class="stage-caret" width="16" height="16" viewBox="0 0 16 16"><path d="M5 2l7 6-7 6" stroke="currentColor" fill="none" stroke-width="2"/></svg></summary>
+<div class="stage-body">
+<p><b>Tujuan:</b> Menyiapkan cara VPS mengakses repo GitHub. Caranya beda tergantung public/private.</p>
+
+<figure class="diagram">
+<svg viewBox="0 0 900 210" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="a3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#4FD1E8"/></marker></defs>
+  <rect x="20" y="80" width="120" height="50" rx="3" fill="none" stroke="#4FD1E8" stroke-width="1.5"/>
+  <text x="80" y="110" text-anchor="middle" fill="#E8F1F5" font-family="IBM Plex Mono" font-size="12">repo GitHub</text>
+
+  <path d="M140,95 L230,45" stroke="#5FD68C" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#a3)"/>
+  <path d="M140,115 L230,165" stroke="#F5A623" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#a3)"/>
+
+  <rect x="230" y="15" width="230" height="60" rx="3" fill="rgba(95,214,140,0.06)" stroke="#5FD68C" stroke-width="1.5"/>
+  <text x="345" y="38" text-anchor="middle" fill="#5FD68C" font-family="IBM Plex Mono" font-size="13" font-weight="700">🟢 PUBLIC</text>
+  <text x="345" y="56" text-anchor="middle" fill="#8FA8B8" font-family="IBM Plex Mono" font-size="10">git clone https://... (langsung)</text>
+
+  <rect x="230" y="140" width="230" height="60" rx="3" fill="rgba(236,106,106,0.06)" stroke="#EC6A6A" stroke-width="1.5"/>
+  <text x="345" y="163" text-anchor="middle" fill="#EC6A6A" font-family="IBM Plex Mono" font-size="13" font-weight="700">🔴 PRIVATE</text>
+  <text x="345" y="181" text-anchor="middle" fill="#8FA8B8" font-family="IBM Plex Mono" font-size="10">butuh Token atau SSH Key</text>
+
+  <path d="M460,160 L560,110" stroke="#EC6A6A" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#a3)"/>
+  <path d="M460,175 L560,190" stroke="#EC6A6A" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#a3)"/>
+
+  <rect x="560" y="80" width="320" height="50" rx="3" fill="none" stroke="#4FD1E8" stroke-width="1.3"/>
+  <text x="575" y="99" fill="#E8F1F5" font-family="IBM Plex Mono" font-size="11">Metode 1 — Personal Access Token</text>
+  <text x="575" y="118" fill="#8FA8B8" font-family="IBM Plex Mono" font-size="9.5">git clone https://TOKEN@github.com/...</text>
+
+  <rect x="560" y="160" width="320" height="50" rx="3" fill="rgba(79,209,232,0.06)" stroke="#4FD1E8" stroke-width="1.6"/>
+  <text x="575" y="179" fill="#E8F1F5" font-family="IBM Plex Mono" font-size="11">Metode 2 — SSH Key (disarankan)</text>
+  <text x="575" y="198" fill="#8FA8B8" font-family="IBM Plex Mono" font-size="9.5">git clone git@github.com:...</text>
+</svg>
+</figure>
+
+<h4>🟢 Skenario A — Repository PUBLIC</h4>
+<p>Tidak perlu autentikasi. Langsung clone nanti di Tahap 10:</p>
+<div class="code-wrap"><pre>git clone https://github.com/username/nama-project.git</pre></div>
+
+<h4>🔴 Skenario B — Repository PRIVATE, Metode 1: Personal Access Token</h4>
+<p>Di GitHub: <b>Settings → Developer settings → Personal access tokens → Tokens (classic)</b> → generate dengan scope <code>repo</code>. Simpan token-nya, lalu clone dengan:</p>
+<div class="code-wrap"><pre>git clone https://TOKEN@github.com/username/nama-project.git</pre></div>
+<div class="callout warn">Jangan simpan token ini di file yang ter-commit ke repo. Token hanya dipakai sekali saat clone.</div>
+
+<h4>🔴 Skenario B — Repository PRIVATE, Metode 2: SSH Key (disarankan)</h4>
+<div class="code-wrap"><div class="code-head">1 — generate SSH key di VPS</div><pre>ssh-keygen -t ed25519 -C "deploy-vps"</pre></div>
+<div class="code-wrap"><div class="code-head">2 — tampilkan public key</div><pre>cat ~/.ssh/id_ed25519.pub</pre></div>
+<p>Copy seluruh output → GitHub → <b>Settings → SSH and GPG keys → New SSH key</b> → paste → <b>Add SSH key</b>.</p>
+<div class="code-wrap"><div class="code-head">3 — test koneksi</div><pre>ssh -T git@github.com</pre></div>
+<div class="output-box">Hi username! You've successfully authenticated, but GitHub does not provide shell access.</div>
+
+<h4>Jika gagal</h4>
+<div class="err-item"><span class="ico">✕</span><span><b>Permission denied (publickey)</b></span></div>
+<div class="err-item sol"><span class="ico">✓</span><span>Pastikan public key benar-benar tersimpan di GitHub, dan Anda copy seluruh isi file <code>.pub</code> termasuk bagian awal <code>ssh-ed25519</code>.</span></div>
+</div>
+</details>
+
+<!-- T5 -->
+<details class="stage" id="t5">
+<summary><span class="stage-num">05</span> Install PHP 8.3<span class="stage-loc">📍 Terminal VPS</span><svg class="stage-caret" width="16" height="16" viewBox="0 0 16 16"><path d="M5 2l7 6-7 6" stroke="currentColor" fill="none" stroke-width="2"/></svg></summary>
+<div class="stage-body">
+<p><b>Tujuan:</b> Laravel 13 butuh PHP 8.3+ beserta ekstensi pendukung (termasuk <code>pgsql</code>).</p>
+<div class="code-wrap"><div class="code-head">1 — tambah repo PHP terbaru</div><pre>sudo apt install software-properties-common -y
+sudo add-apt-repository ppa:ondrej/php -y
+sudo apt update</pre></div>
+<div class="code-wrap"><div class="code-head">2 — install PHP 8.3 + ekstensi</div><pre>sudo apt install php8.3 php8.3-fpm php8.3-cli php8.3-common php8.3-pgsql \
+php8.3-mbstring php8.3-xml php8.3-curl php8.3-zip php8.3-bcmath \
+php8.3-gd php8.3-intl php8.3-opcache -y</pre></div>
+<h4>Cara mengecek berhasil</h4>
+<div class="code-wrap"><pre>php -v</pre></div>
+<div class="output-box">PHP 8.3.x (cli) ...</div>
+<div class="code-wrap"><pre>php -m | grep pgsql</pre></div>
+<div class="output-box">pgsql
+pdo_pgsql</div>
+</div>
+</details>
+
+<!-- T6 -->
+<details class="stage" id="t6">
+<summary><span class="stage-num">06</span> Install Composer<span class="stage-loc">📍 Terminal VPS</span><svg class="stage-caret" width="16" height="16" viewBox="0 0 16 16"><path d="M5 2l7 6-7 6" stroke="currentColor" fill="none" stroke-width="2"/></svg></summary>
+<div class="stage-body">
+<div class="code-wrap"><pre>curl -sS https://getcomposer.org/installer | php
+sudo mv composer.phar /usr/local/bin/composer</pre></div>
+<h4>Cara mengecek berhasil</h4>
+<div class="code-wrap"><pre>composer --version</pre></div>
+<div class="output-box">Composer version 2.x.x</div>
+</div>
+</details>
+
+<!-- T7 -->
+<details class="stage" id="t7">
+<summary><span class="stage-num">07</span> Install Node.js & npm<span class="stage-loc">📍 Terminal VPS</span><svg class="stage-caret" width="16" height="16" viewBox="0 0 16 16"><path d="M5 2l7 6-7 6" stroke="currentColor" fill="none" stroke-width="2"/></svg></summary>
+<div class="stage-body">
+<div class="code-wrap"><pre>curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install nodejs -y</pre></div>
+<h4>Cara mengecek berhasil</h4>
+<div class="code-wrap"><pre>node -v
+npm -v</pre></div>
+<div class="output-box">v20.x.x
+10.x.x</div>
+<div class="callout warn">Jika RAM VPS ≤2GB, <code>npm run build</code> nanti bisa gagal karena kehabisan memori. Solusi swap ada di Tahap 23.</div>
+</div>
+</details>
+
+<!-- T8 -->
+<details class="stage" id="t8">
+<summary><span class="stage-num">08</span> Konfigurasi User PostgreSQL<span class="stage-loc">📍 Terminal VPS</span><svg class="stage-caret" width="16" height="16" viewBox="0 0 16 16"><path d="M5 2l7 6-7 6" stroke="currentColor" fill="none" stroke-width="2"/></svg></summary>
+<div class="stage-body">
+<p><b>Tujuan:</b> Menyiapkan <b>user</b> PostgreSQL (<code>sendy</code>) untuk dipakai Laravel. <b>Database TIDAK dibuat di sini</b> — akan dibuat manual lewat pgAdmin di Tahap 9.</p>
+<div class="callout">Jika PostgreSQL berada di <b>server terpisah</b> (bukan VPS ini), lewati instalasi dan buat user ini langsung lewat pgAdmin/tool client yang Anda pakai untuk akses server itu.</div>
+
+<h4>1 — install PostgreSQL (lewati jika sudah ada / server terpisah)</h4>
+<div class="code-wrap"><pre>sudo apt install postgresql postgresql-contrib -y</pre></div>
+
+<h4>2 — masuk shell PostgreSQL</h4>
+<div class="code-wrap"><pre>sudo -u postgres psql</pre></div>
+
+<h4>3 — buat user/role (dijalankan di dalam prompt psql)</h4>
+<div class="code-wrap sql"><div class="code-head">SQL</div><pre>CREATE USER sendy WITH PASSWORD 'sendy123';</pre></div>
+<div class="code-wrap sql"><pre>\q</pre></div>
+
+<div class="callout danger"><b>Penting soal keamanan:</b> <code>sendy123</code> hanyalah contoh. Untuk production sungguhan, gunakan password kuat (16+ karakter, kombinasi huruf/angka/simbol), dan <b>jangan pernah</b> commit password ke GitHub — hanya boleh ada di <code>.env</code> server, dan <code>.env</code> wajib ada di <code>.gitignore</code>.</div>
+
+<h4>Cara mengecek berhasil</h4>
+<div class="code-wrap"><pre>sudo -u postgres psql -c "\du"</pre></div>
+<div class="output-box">Role name : sendy
+...</div>
+</div>
+</details>
+
+<!-- T9 — PGADMIN ILLUSTRATION -->
+<details class="stage" id="t9">
+<summary><span class="stage-num">09</span> Membuat Database via pgAdmin<span class="stage-loc">📍 pgAdmin (lokal)</span><svg class="stage-caret" width="16" height="16" viewBox="0 0 16 16"><path d="M5 2l7 6-7 6" stroke="currentColor" fill="none" stroke-width="2"/></svg></summary>
+<div class="stage-body">
+<p><b>Tujuan:</b> Ini bagian yang paling sering ditanyakan — cara <b>menghubungkan pgAdmin ke server PostgreSQL di VPS</b>, lalu membuat database di dalamnya secara manual.</p>
+
+<h4>Ilustrasi: Dialog "Register Server" di pgAdmin</h4>
+<figure class="diagram">
+<svg viewBox="0 0 720 400" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="720" height="400" rx="6" fill="#0F2438" stroke="#2A6478" stroke-width="1.5"/>
+  <rect x="0" y="0" width="720" height="36" rx="6" fill="#123049"/>
+  <rect x="0" y="20" width="720" height="16" fill="#123049"/>
+  <circle cx="22" cy="18" r="6" fill="#EC6A6A"/>
+  <circle cx="44" cy="18" r="6" fill="#F5A623"/>
+  <circle cx="66" cy="18" r="6" fill="#5FD68C"/>
+  <text x="360" y="23" text-anchor="middle" fill="#E8F1F5" font-family="IBM Plex Mono" font-size="13" font-weight="600">Register — Server</text>
+
+  <!-- Tabs -->
+  <text x="30" y="60" fill="#8FA8B8" font-family="IBM Plex Mono" font-size="12">General</text>
+  <text x="110" y="60" fill="#4FD1E8" font-family="IBM Plex Mono" font-size="12" font-weight="700" text-decoration="underline">Connection</text>
+  <line x1="20" y1="70" x2="700" y2="70" stroke="#2A6478" stroke-width="1"/>
+
+  <!-- Fields -->
+  <text x="30" y="102" fill="#8FA8B8" font-family="IBM Plex Mono" font-size="12">Host name/address</text>
+  <rect x="260" y="86" width="430" height="26" rx="3" fill="#081420" stroke="#4FD1E8" stroke-width="1"/>
+  <text x="270" y="103" fill="#5FD68C" font-family="IBM Plex Mono" font-size="12">IP_VPS_ANDA  (atau host DB Anda)</text>
+
+  <text x="30" y="142" fill="#8FA8B8" font-family="IBM Plex Mono" font-size="12">Port</text>
+  <rect x="260" y="126" width="120" height="26" rx="3" fill="#081420" stroke="#2A6478" stroke-width="1"/>
+  <text x="270" y="143" fill="#E8F1F5" font-family="IBM Plex Mono" font-size="12">5432</text>
+
+  <text x="30" y="182" fill="#8FA8B8" font-family="IBM Plex Mono" font-size="12">Maintenance database</text>
+  <rect x="260" y="166" width="220" height="26" rx="3" fill="#081420" stroke="#2A6478" stroke-width="1"/>
+  <text x="270" y="183" fill="#E8F1F5" font-family="IBM Plex Mono" font-size="12">postgres</text>
+
+  <text x="30" y="222" fill="#8FA8B8" font-family="IBM Plex Mono" font-size="12">Username</text>
+  <rect x="260" y="206" width="220" height="26" rx="3" fill="#081420" stroke="#4FD1E8" stroke-width="1"/>
+  <text x="270" y="223" fill="#5FD68C" font-family="IBM Plex Mono" font-size="12">sendy</text>
+
+  <text x="30" y="262" fill="#8FA8B8" font-family="IBM Plex Mono" font-size="12">Password</text>
+  <rect x="260" y="246" width="220" height="26" rx="3" fill="#081420" stroke="#4FD1E8" stroke-width="1"/>
+  <text x="270" y="263" fill="#5FD68C" font-family="IBM Plex Mono" font-size="12">••••••••</text>
+
+  <text x="30" y="302" fill="#8FA8B8" font-family="IBM Plex Mono" font-size="12">Save password?</text>
+  <rect x="260" y="290" width="16" height="16" rx="2" fill="none" stroke="#4FD1E8" stroke-width="1.5"/>
+  <path d="M262,298 l5,5 l9,-11" stroke="#5FD68C" stroke-width="2" fill="none"/>
+
+  <rect x="560" y="350" width="130" height="34" rx="4" fill="rgba(79,209,232,0.12)" stroke="#4FD1E8" stroke-width="1.5"/>
+  <text x="625" y="372" text-anchor="middle" fill="#4FD1E8" font-family="IBM Plex Mono" font-size="12" font-weight="700">Save</text>
+</svg>
+</figure>
+<figcaption style="font-family:var(--mono);color:var(--text-dim);font-size:12px;margin-top:-16px;margin-bottom:20px;">Ilustrasi tampilan dialog pgAdmin — nilai sebenarnya menyesuaikan server Anda</figcaption>
+
+<h4>Langkah-langkah lengkap</h4>
+<div class="err-item"><span class="ico">1</span><span>Buka pgAdmin → klik kanan pada <b>Servers</b> di panel kiri → <b>Register → Server...</b></span></div>
+<div class="err-item"><span class="ico">2</span><span>Tab <b>General</b>: isi <b>Name</b> bebas, misalnya <code>VPS Production</code> (hanya label, tidak memengaruhi koneksi).</span></div>
+<div class="err-item"><span class="ico">3</span><span>Pindah ke tab <b>Connection</b> (lihat ilustrasi di atas):
+<br>— <b>Host name/address:</b> IP VPS Anda (jika PostgreSQL di VPS yang sama), atau host database terpisah
+<br>— <b>Port:</b> <code>5432</code> (default PostgreSQL)
+<br>— <b>Maintenance database:</b> <code>postgres</code> (database bawaan untuk login awal)
+<br>— <b>Username:</b> <code>sendy</code> (user yang dibuat di Tahap 8)
+<br>— <b>Password:</b> password yang Anda set di Tahap 8</span></div>
+<div class="err-item"><span class="ico">4</span><span>Klik <b>Save</b>. Jika koneksi berhasil, server akan muncul di panel kiri dan bisa di-expand.</span></div>
+<div class="err-item"><span class="ico">5</span><span>Klik kanan pada <b>Databases</b> di bawah server tersebut → <b>Create → Database...</b></span></div>
+<div class="err-item"><span class="ico">6</span><span>Isi <b>Database name</b>, misalnya <code>nama_database</code>. Di tab <b>Definition</b>, set <b>Owner</b> ke <code>sendy</code> agar Laravel punya hak akses penuh.</span></div>
+<div class="err-item"><span class="ico">7</span><span>Klik <b>Save</b>. Database baru langsung muncul di panel kiri.</span></div>
+
+<div class="callout warn"><b>Jika PostgreSQL berjalan di VPS yang sama</b> dengan aplikasi Laravel, pastikan PostgreSQL mengizinkan koneksi dari luar (bukan hanya <code>localhost</code>) agar pgAdmin di komputer lokal Anda bisa connect. Ini butuh edit <code>postgresql.conf</code> (<code>listen_addresses = '*'</code>) dan <code>pg_hba.conf</code>, serta membuka port 5432 di firewall — <b>hanya lakukan ini jika memang perlu akses dari luar, dan sebaiknya batasi ke IP Anda saja demi keamanan.</b></div>
+
+<h4>Cara mengecek berhasil</h4>
+<p>Database baru terlihat di pgAdmin di bawah <b>Databases</b>, dan bisa dibuka (expand) tanpa error.</p>
+
+<h4>Jika gagal</h4>
+<div class="err-item"><span class="ico">✕</span><span><b>Unable to connect to server: timeout expired</b></span></div>
+<div class="err-item sol"><span class="ico">✓</span><span>Port 5432 belum terbuka di firewall VPS, atau <code>listen_addresses</code> di <code>postgresql.conf</code> masih <code>localhost</code>. Sesuaikan lalu restart PostgreSQL: <code>sudo systemctl restart postgresql</code>.</span></div>
+<div class="err-item"><span class="ico">✕</span><span><b>password authentication failed for user "sendy"</b></span></div>
+<div class="err-item sol"><span class="ico">✓</span><span>Password salah ketik, atau <code>pg_hba.conf</code> belum mengizinkan metode auth yang sesuai (biasanya perlu baris <code>md5</code> atau <code>scram-sha-256</code> untuk koneksi dari IP luar).</span></div>
+
+<p style="margin-top:16px;">📝 <b>Catat nama database yang Anda buat</b> — dipakai di Tahap 11 untuk mengisi <code>DB_DATABASE</code> di <code>.env</code>.</p>
+</div>
+</details>
+
+<!-- T10 -->
+<details class="stage" id="t10">
+<summary><span class="stage-num">10</span> Clone Project dari GitHub<span class="stage-loc">📍 Terminal VPS</span><svg class="stage-caret" width="16" height="16" viewBox="0 0 16 16"><path d="M5 2l7 6-7 6" stroke="currentColor" fill="none" stroke-width="2"/></svg></summary>
+<div class="stage-body">
+<div class="code-wrap"><div class="code-head">1 — siapkan direktori</div><pre>sudo mkdir -p /var/www
+sudo chown sendy:sendy /var/www
+cd /var/www</pre></div>
+
+<h4>2 — clone (pilih sesuai jenis repo)</h4>
+<p>🟢 Public:</p>
+<div class="code-wrap"><pre>git clone https://github.com/username/nama-project.git</pre></div>
+<p>🔴 Private (SSH):</p>
+<div class="code-wrap"><pre>git clone git@github.com:username/nama-project.git</pre></div>
+<p>🔴 Private (Token):</p>
+<div class="code-wrap"><pre>git clone https://TOKEN@github.com/username/nama-project.git</pre></div>
+
+<div class="code-wrap"><div class="code-head">3 — masuk folder project</div><pre>cd nama-project</pre></div>
+
+<h4>Cara mengecek berhasil</h4>
+<div class="code-wrap"><pre>ls -la</pre></div>
+<div class="output-box">app/  artisan  composer.json  resources/  routes/  ...</div>
+
+<h4>Jika gagal</h4>
+<div class="err-item"><span class="ico">✕</span><span><b>fatal: could not read Username for 'https://github.com'</b></span></div>
+<div class="err-item sol"><span class="ico">✓</span><span>Repo private tapi clone pakai URL public biasa. Gunakan URL dengan token/SSH sesuai Tahap 4.</span></div>
+</div>
+</details>
+
+<!-- T11 -->
+<details class="stage" id="t11">
+<summary><span class="stage-num">11</span> Konfigurasi .env<span class="stage-loc">📍 Terminal VPS</span><svg class="stage-caret" width="16" height="16" viewBox="0 0 16 16"><path d="M5 2l7 6-7 6" stroke="currentColor" fill="none" stroke-width="2"/></svg></summary>
+<div class="stage-body">
+<div class="code-wrap"><div class="code-head">1 — copy env example</div><pre>cp .env.example .env
+nano .env</pre></div>
+
+<h4>2 — sesuaikan baris berikut</h4>
+<div class="code-wrap ini"><div class="code-head">.env</div><pre>APP_NAME="Nama Aplikasi Anda"
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://domain-saya.com
+
+DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_DATABASE=nama_database
+DB_USERNAME=sendy
+DB_PASSWORD=sendy123</pre></div>
+
+<div class="callout warn">
+<b>Wajib disesuaikan:</b><br>
+• <code>APP_URL</code> → domain asli Anda<br>
+• <code>DB_HOST</code> → jika PostgreSQL di server terpisah, ganti dengan IP/hostname server itu<br>
+• <code>DB_DATABASE</code> → nama database yang dibuat di pgAdmin (Tahap 9), bukan teks literal<br>
+• <code>DB_PASSWORD</code> → gunakan password kuat untuk production sungguhan
+</div>
+
+<p>Simpan di nano: <code>Ctrl+O</code> → <code>Enter</code> → <code>Ctrl+X</code>.</p>
+
+<h4>Cara mengecek berhasil</h4>
+<div class="code-wrap"><pre>cat .env | grep DB_</pre></div>
+
+<div class="callout danger">🔒 File <code>.env</code> tidak boleh ter-commit ke GitHub. Pastikan ada di <code>.gitignore</code> (biasanya sudah default di project Laravel baru).</div>
+</div>
+</details>
+
+<!-- T12 -->
+<details class="stage" id="t12">
+<summary><span class="stage-num">12</span> Install Dependency Laravel<span class="stage-loc">📍 Terminal VPS</span><svg class="stage-caret" width="16" height="16" viewBox="0 0 16 16"><path d="M5 2l7 6-7 6" stroke="currentColor" fill="none" stroke-width="2"/></svg></summary>
+<div class="stage-body">
+<div class="code-wrap"><pre>composer install --no-dev --optimize-autoloader</pre></div>
+<p style="font-size:14px;color:var(--text-secondary)"><code>--no-dev</code> = tanpa package development. <code>--optimize-autoloader</code> = performa lebih baik di production.</p>
+<h4>Cara mengecek berhasil</h4>
+<div class="code-wrap"><pre>ls vendor/</pre></div>
+<h4>Jika gagal</h4>
+<div class="err-item"><span class="ico">✕</span><span><b>Allowed memory size exhausted</b></span></div>
+<div class="err-item sol"><span class="ico">✓</span><span><code>COMPOSER_MEMORY_LIMIT=-1 composer install --no-dev --optimize-autoloader</code></span></div>
+</div>
+</details>
+
+<!-- T13 -->
+<details class="stage" id="t13">
+<summary><span class="stage-num">13</span> Install Dependency Node & Build Vite<span class="stage-loc">📍 Terminal VPS</span><svg class="stage-caret" width="16" height="16" viewBox="0 0 16 16"><path d="M5 2l7 6-7 6" stroke="currentColor" fill="none" stroke-width="2"/></svg></summary>
+<div class="stage-body">
+<div class="code-wrap"><div class="code-head">1</div><pre>npm install</pre></div>
+<div class="code-wrap"><div class="code-head">2</div><pre>npm run build</pre></div>
+<h4>Cara mengecek berhasil</h4>
+<div class="code-wrap"><pre>ls public/build/</pre></div>
+<div class="output-box">manifest.json
+assets/</div>
+<h4>Jika gagal</h4>
+<div class="err-item"><span class="ico">✕</span><span><b>Proses macet / mati mendadak (out of memory)</b></span></div>
+<div class="err-item sol"><span class="ico">✓</span><span>Tambahkan swap file — lihat Tahap 23.</span></div>
+</div>
+</details>
+
+<!-- T14 -->
+<details class="stage" id="t14">
+<summary><span class="stage-num">14</span> Application Key & Cek Koneksi DB<span class="stage-loc">📍 Terminal VPS</span><svg class="stage-caret" width="16" height="16" viewBox="0 0 16 16"><path d="M5 2l7 6-7 6" stroke="currentColor" fill="none" stroke-width="2"/></svg></summary>
+<div class="stage-body">
+<div class="code-wrap"><div class="code-head">1 — generate app key</div><pre>php artisan key:generate</pre></div>
+
+<div class="code-wrap"><div class="code-head">2 — cek koneksi database (read-only, aman)</div><pre>php artisan tinker --execute="DB::select('SELECT 1 as test'); echo 'Koneksi database berhasil!';"</pre></div>
+
+<p>Alternatif — lihat daftar tabel yang sudah ada tanpa mengubah apa pun:</p>
+<div class="code-wrap"><pre>php artisan tinker --execute="print_r(DB::select(\"SELECT table_name FROM information_schema.tables WHERE table_schema='public'\"));"</pre></div>
+
+<div class="callout danger">❌ <b>Jangan jalankan</b> <code>php artisan migrate</code> di tahap ini atau kapan pun — schema database dianggap sudah lengkap via pgAdmin.</div>
+
+<h4>Jika gagal</h4>
+<div class="err-item"><span class="ico">✕</span><span><b>SQLSTATE[08006] could not connect to server</b></span></div>
+<div class="err-item sol"><span class="ico">✓</span><span>Cek <code>DB_HOST</code>/<code>DB_PORT</code> di <code>.env</code>; jika server terpisah, pastikan firewall server DB mengizinkan koneksi dari IP VPS.</span></div>
+<div class="err-item"><span class="ico">✕</span><span><b>SQLSTATE[3D000] database does not exist</b></span></div>
+<div class="err-item sol"><span class="ico">✓</span><span>Nama <code>DB_DATABASE</code> tidak cocok dengan yang dibuat di pgAdmin Tahap 9.</span></div>
+</div>
+</details>
+
+<!-- T15 -->
+<details class="stage" id="t15">
+<summary><span class="stage-num">15</span> Permission & Storage Link<span class="stage-loc">📍 Terminal VPS</span><svg class="stage-caret" width="16" height="16" viewBox="0 0 16 16"><path d="M5 2l7 6-7 6" stroke="currentColor" fill="none" stroke-width="2"/></svg></summary>
+<div class="stage-body">
+<div class="code-wrap"><div class="code-head">1</div><pre>sudo chown -R sendy:www-data /var/www/nama-project</pre></div>
+<div class="code-wrap"><div class="code-head">2</div><pre>sudo chmod -R 775 storage bootstrap/cache</pre></div>
+<div class="code-wrap"><div class="code-head">3</div><pre>php artisan storage:link</pre></div>
+<div class="output-box">The [public/storage] link has been connected to [storage/app/public].</div>
+</div>
+</details>
+
+<!-- T16 -->
+<details class="stage" id="t16">
+<summary><span class="stage-num">16</span> Konfigurasi Nginx<span class="stage-loc">📍 Terminal VPS</span><svg class="stage-caret" width="16" height="16" viewBox="0 0 16 16"><path d="M5 2l7 6-7 6" stroke="currentColor" fill="none" stroke-width="2"/></svg></summary>
+<div class="stage-body">
+<div class="code-wrap"><div class="code-head">1 — install</div><pre>sudo apt install nginx -y</pre></div>
+<div class="code-wrap"><div class="code-head">2 — buat konfigurasi</div><pre>sudo nano /etc/nginx/sites-available/domain-saya.com</pre></div>
+
+<div class="code-wrap"><div class="code-head">nginx config</div><pre>server {
+    listen 80;
+    server_name domain-saya.com www.domain-saya.com;
+    root /var/www/nama-project/public;
+    index index.php;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    location ~ /\.(?!well-known).* {
+        deny all;
+    }
+
+    client_max_body_size 20M;
+}</pre></div>
+
+<div class="code-wrap"><div class="code-head">3 — aktifkan & test</div><pre>sudo ln -s /etc/nginx/sites-available/domain-saya.com /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl restart nginx</pre></div>
+
+<h4>Jika gagal</h4>
+<div class="err-item"><span class="ico">✕</span><span><b>duplicate listen options</b></span></div>
+<div class="err-item sol"><span class="ico">✓</span><span><code>sudo rm /etc/nginx/sites-enabled/default</code> lalu <code>sudo nginx -t</code> lagi.</span></div>
+</div>
+</details>
+
+<!-- T17 -->
+<details class="stage" id="t17">
+<summary><span class="stage-num">17</span> Konfigurasi PHP-FPM<span class="stage-loc">📍 Terminal VPS</span><svg class="stage-caret" width="16" height="16" viewBox="0 0 16 16"><path d="M5 2l7 6-7 6" stroke="currentColor" fill="none" stroke-width="2"/></svg></summary>
+<div class="stage-body">
+
+<figure class="diagram">
+<svg viewBox="0 0 800 140" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="a4" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#4FD1E8"/></marker></defs>
+  <rect x="10" y="45" width="120" height="50" rx="3" fill="none" stroke="#4FD1E8" stroke-width="1.5"/>
+  <text x="70" y="75" text-anchor="middle" fill="#E8F1F5" font-family="IBM Plex Mono" font-size="12">Browser</text>
+  <path d="M130,70 L220,70" stroke="#4FD1E8" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#a4)"/>
+  <text x="175" y="60" text-anchor="middle" fill="#8FA8B8" font-family="IBM Plex Mono" font-size="9">:443</text>
+
+  <rect x="220" y="45" width="120" height="50" rx="3" fill="none" stroke="#4FD1E8" stroke-width="1.5"/>
+  <text x="280" y="75" text-anchor="middle" fill="#E8F1F5" font-family="IBM Plex Mono" font-size="12">Nginx</text>
+  <path d="M340,70 L430,70" stroke="#4FD1E8" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#a4)"/>
+  <text x="385" y="60" text-anchor="middle" fill="#8FA8B8" font-family="IBM Plex Mono" font-size="9">.sock</text>
+
+  <rect x="430" y="45" width="140" height="50" rx="3" fill="none" stroke="#4FD1E8" stroke-width="1.5"/>
+  <text x="500" y="75" text-anchor="middle" fill="#E8F1F5" font-family="IBM Plex Mono" font-size="12">PHP-FPM</text>
+  <path d="M570,70 L660,70" stroke="#4FD1E8" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#a4)"/>
+
+  <rect x="660" y="45" width="130" height="50" rx="3" fill="none" stroke="#5FD68C" stroke-width="1.5"/>
+  <text x="725" y="75" text-anchor="middle" fill="#E8F1F5" font-family="IBM Plex Mono" font-size="12">Laravel</text>
+</svg>
+</figure>
+
+<div class="code-wrap"><div class="code-head">1 — cek status</div><pre>sudo systemctl status php8.3-fpm</pre></div>
+<div class="code-wrap"><div class="code-head">2 — (opsional) tuning</div><pre>sudo nano /etc/php/8.3/fpm/php.ini</pre></div>
+<div class="code-wrap ini"><pre>upload_max_filesize = 20M
+post_max_size = 20M
+memory_limit = 256M
+max_execution_time = 60</pre></div>
+<div class="code-wrap"><div class="code-head">3 — restart</div><pre>sudo systemctl restart php8.3-fpm</pre></div>
+
+<h4>Jika gagal</h4>
+<div class="err-item"><span class="ico">✕</span><span><b>Nginx menampilkan 502 Bad Gateway</b></span></div>
+<div class="err-item sol"><span class="ico">✓</span><span>PHP-FPM tidak jalan atau path socket salah. Cek <code>sudo systemctl status php8.3-fpm</code> dan <code>sudo tail -f /var/log/nginx/error.log</code>.</span></div>
+</div>
+</details>
+
+<!-- T18 -->
+<details class="stage" id="t18">
+<summary><span class="stage-num">18</span> Queue Worker (Opsional)<span class="stage-loc">📍 Terminal VPS</span><svg class="stage-caret" width="16" height="16" viewBox="0 0 16 16"><path d="M5 2l7 6-7 6" stroke="currentColor" fill="none" stroke-width="2"/></svg></summary>
+<div class="stage-body">
+<p>Lewati jika project tidak menggunakan queue (<code>QUEUE_CONNECTION=sync</code>).</p>
+<div class="code-wrap"><div class="code-head">/etc/systemd/system/laravel-worker.service</div><pre>[Unit]
+Description=Laravel Queue Worker
+After=network.target
+
+[Service]
+User=sendy
+Group=www-data
+Restart=always
+ExecStart=/usr/bin/php /var/www/nama-project/artisan queue:work --sleep=3 --tries=3 --max-time=3600
+
+[Install]
+WantedBy=multi-user.target</pre></div>
+<div class="code-wrap"><pre>sudo systemctl daemon-reload
+sudo systemctl enable laravel-worker
+sudo systemctl start laravel-worker</pre></div>
+<h4>Jika gagal</h4>
+<div class="err-item"><span class="ico">✕</span><span><b>Worker terus restart (crash loop)</b></span></div>
+<div class="err-item sol"><span class="ico">✓</span><span><code>sudo journalctl -u laravel-worker -n 50 --no-pager</code> untuk lihat detail error.</span></div>
+</div>
+</details>
+
+<!-- T19 -->
+<details class="stage" id="t19">
+<summary><span class="stage-num">19</span> Domain / DNS<span class="stage-loc">📍 Panel DNS Provider</span><svg class="stage-caret" width="16" height="16" viewBox="0 0 16 16"><path d="M5 2l7 6-7 6" stroke="currentColor" fill="none" stroke-width="2"/></svg></summary>
+<div class="stage-body">
+<ul class="checklist">
+<li>Login ke panel DNS provider domain Anda</li>
+<li>Buat <b style="color:var(--text-primary)">A Record</b> — Name: <code>@</code> dan <code>www</code>, Value: IP VPS Anda</li>
+<li>Simpan, tunggu propagasi (beberapa menit hingga 24 jam)</li>
+</ul>
+<h4>Cara mengecek berhasil</h4>
+<div class="code-wrap"><pre>dig domain-saya.com +short</pre></div>
+<div class="callout">IP yang muncul harus sama persis dengan IP VPS Anda.</div>
+</div>
+</details>
+
+<!-- T20 -->
+<details class="stage" id="t20">
+<summary><span class="stage-num">20</span> SSL / HTTPS dengan Certbot<span class="stage-loc">📍 Terminal VPS</span><svg class="stage-caret" width="16" height="16" viewBox="0 0 16 16"><path d="M5 2l7 6-7 6" stroke="currentColor" fill="none" stroke-width="2"/></svg></summary>
+<div class="stage-body">
+
+<figure class="diagram">
+<svg viewBox="0 0 820 130" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="a5" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#4FD1E8"/></marker></defs>
+  <rect x="10" y="40" width="140" height="50" rx="3" fill="none" stroke="#4FD1E8" stroke-width="1.5"/>
+  <text x="80" y="70" text-anchor="middle" fill="#E8F1F5" font-family="IBM Plex Mono" font-size="12">certbot --nginx</text>
+  <path d="M150,65 L250,65" stroke="#4FD1E8" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#a5)"/>
+
+  <rect x="250" y="40" width="180" height="50" rx="3" fill="none" stroke="#4FD1E8" stroke-width="1.5"/>
+  <text x="340" y="60" text-anchor="middle" fill="#E8F1F5" font-family="IBM Plex Mono" font-size="12">Let's Encrypt CA</text>
+  <text x="340" y="76" text-anchor="middle" fill="#8FA8B8" font-family="IBM Plex Mono" font-size="9">verifikasi domain</text>
+  <path d="M430,65 L530,65" stroke="#4FD1E8" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#a5)"/>
+
+  <rect x="530" y="40" width="140" height="50" rx="3" fill="none" stroke="#4FD1E8" stroke-width="1.5"/>
+  <text x="600" y="70" text-anchor="middle" fill="#E8F1F5" font-family="IBM Plex Mono" font-size="12">Sertifikat SSL</text>
+  <path d="M670,65 L740,65" stroke="#5FD68C" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#a5)"/>
+
+  <rect x="740" y="35" width="70" height="60" rx="3" fill="rgba(95,214,140,0.08)" stroke="#5FD68C" stroke-width="1.8"/>
+  <text x="775" y="70" text-anchor="middle" fill="#5FD68C" font-family="IBM Plex Mono" font-size="18">🔒</text>
+</svg>
+</figure>
+
+<div class="callout warn">⚠️ Prasyarat: domain harus sudah mengarah ke IP VPS ini (Tahap 19 sudah propagasi) sebelum menjalankan Certbot.</div>
+
+<div class="code-wrap"><div class="code-head">1 — install certbot</div><pre>sudo apt install certbot python3-certbot-nginx -y</pre></div>
+<div class="code-wrap"><div class="code-head">2 — jalankan certbot</div><pre>sudo certbot --nginx -d domain-saya.com -d www.domain-saya.com</pre></div>
+<p>Isi email untuk notifikasi, setujui ToS, dan pilih <b>Yes</b> untuk redirect otomatis HTTP → HTTPS.</p>
+
+<div class="output-box">Successfully received certificate.
+Congratulations! You have successfully enabled HTTPS</div>
+
+<div class="code-wrap"><div class="code-head">3 — verifikasi auto-renewal</div><pre>sudo systemctl status certbot.timer
+sudo certbot renew --dry-run</pre></div>
+
+<h4>Jika gagal</h4>
+<div class="err-item"><span class="ico">✕</span><span><b>Challenge failed for domain</b></span></div>
+<div class="err-item sol"><span class="ico">✓</span><span>DNS belum ter-propagasi penuh, atau port 80 tertutup. Cek ulang Tahap 19 dan <code>sudo ufw status</code>.</span></div>
+</div>
+</details>
+
+<!-- T21 -->
+<details class="stage" id="t21">
+<summary><span class="stage-num">21</span> Testing Production<span class="stage-loc">📍 Browser + Terminal VPS</span><svg class="stage-caret" width="16" height="16" viewBox="0 0 16 16"><path d="M5 2l7 6-7 6" stroke="currentColor" fill="none" stroke-width="2"/></svg></summary>
+<div class="stage-body">
+<ul class="checklist">
+<li>Buka <code>https://domain-saya.com</code> — pastikan halaman muncul dengan gembok 🔒</li>
+<li>Cek console browser (DevTools) — tidak ada error asset 404</li>
+<li>Cek log Laravel: <code>tail -f storage/logs/laravel.log</code></li>
+<li>Cek log Nginx: <code>sudo tail -f /var/log/nginx/error.log</code></li>
+<li>Test fitur yang pakai database (login, submit form)</li>
+<li>Cek redirect HTTP→HTTPS: <code>curl -I http://domain-saya.com</code> harus status 301/302</li>
+</ul>
+</div>
+</details>
+
+<!-- T22 -->
+<details class="stage" id="t22">
+<summary><span class="stage-num">22</span> Update Aplikasi (git pull)<span class="stage-loc">📍 Terminal VPS</span><svg class="stage-caret" width="16" height="16" viewBox="0 0 16 16"><path d="M5 2l7 6-7 6" stroke="currentColor" fill="none" stroke-width="2"/></svg></summary>
+<div class="stage-body">
+<p><b>Tujuan:</b> Alur ini dipakai setiap kali Anda push perubahan baru ke GitHub dan ingin men-deploy-nya ke production.</p>
+
+<figure class="diagram">
+<svg viewBox="0 0 900 90" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="a6" markerWidth="7" markerHeight="7" refX="5" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="#4FD1E8"/></marker></defs>
+  <text x="10" y="25" fill="#F5A623" font-family="IBM Plex Mono" font-size="11">artisan down</text>
+  <path d="M100,20 L165,20" stroke="#4FD1E8" stroke-width="1.3" stroke-dasharray="3 2" marker-end="url(#a6)"/>
+  <text x="170" y="25" fill="#4FD1E8" font-family="IBM Plex Mono" font-size="11">git pull</text>
+  <path d="M235,20 L300,20" stroke="#4FD1E8" stroke-width="1.3" stroke-dasharray="3 2" marker-end="url(#a6)"/>
+  <text x="305" y="25" fill="#4FD1E8" font-family="IBM Plex Mono" font-size="11">composer install</text>
+  <path d="M430,20 L495,20" stroke="#4FD1E8" stroke-width="1.3" stroke-dasharray="3 2" marker-end="url(#a6)"/>
+  <text x="500" y="25" fill="#4FD1E8" font-family="IBM Plex Mono" font-size="11">npm run build</text>
+  <path d="M610,20 L675,20" stroke="#4FD1E8" stroke-width="1.3" stroke-dasharray="3 2" marker-end="url(#a6)"/>
+  <text x="680" y="25" fill="#4FD1E8" font-family="IBM Plex Mono" font-size="11">cache ulang</text>
+
+  <text x="10" y="65" fill="#5FD68C" font-family="IBM Plex Mono" font-size="11">restart worker</text>
+  <path d="M135,60 L200,60" stroke="#4FD1E8" stroke-width="1.3" stroke-dasharray="3 2" marker-end="url(#a6)"/>
+  <text x="205" y="65" fill="#5FD68C" font-family="IBM Plex Mono" font-size="11" font-weight="700">artisan up</text>
+</svg>
+</figure>
+
+<div class="code-wrap"><div class="code-head">1 — masuk folder & maintenance mode</div><pre>cd /var/www/nama-project
+php artisan down</pre></div>
+<div class="code-wrap"><div class="code-head">2 — tarik perubahan terbaru</div><pre>git pull origin main</pre></div>
+<p style="color:var(--text-secondary);font-size:14px;">Ganti <code>main</code> sesuai nama branch production Anda.</p>
+<div class="code-wrap"><div class="code-head">3 — update dependency (jika ada perubahan)</div><pre>composer install --no-dev --optimize-autoloader
+npm install
+npm run build</pre></div>
+<div class="code-wrap"><div class="code-head">4 — cache ulang konfigurasi</div><pre>php artisan config:cache
+php artisan route:cache
+php artisan view:cache</pre></div>
+<div class="code-wrap"><div class="code-head">5 — restart worker (jika pakai queue)</div><pre>sudo systemctl restart laravel-worker</pre></div>
+<div class="code-wrap"><div class="code-head">6 — nonaktifkan maintenance mode</div><pre>php artisan up</pre></div>
+
+<div class="callout danger">Sesuai aturan yang Anda tetapkan, <code>php artisan migrate</code> tetap <b>tidak dijalankan</b> di alur update ini. Perubahan struktur database (jika memang perlu) tetap dilakukan manual & terkontrol lewat pgAdmin.</div>
+
+<h4>Jika gagal</h4>
+<div class="err-item"><span class="ico">✕</span><span><b>local changes would be overwritten by merge</b></span></div>
+<div class="err-item sol"><span class="ico">✓</span><span>Jangan edit file langsung di server (kecuali <code>.env</code>). Cek <code>git status</code>, lalu <code>git stash</code> atau <code>git checkout -- file</code> untuk buang perubahan lokal.</span></div>
+
+<div class="callout ok">💡 <b>Tips:</b> untuk workflow lebih rapi, buat script <code>deploy.sh</code> yang menjalankan semua langkah di atas sekaligus, atau pertimbangkan tools seperti Laravel Envoy, GitHub Actions, atau Deployer.</div>
+</div>
+</details>
+
+<!-- T23 -->
+<details class="stage" id="t23">
+<summary><span class="stage-num">23</span> Troubleshooting Umum<span class="stage-loc">📍 Referensi</span><svg class="stage-caret" width="16" height="16" viewBox="0 0 16 16"><path d="M5 2l7 6-7 6" stroke="currentColor" fill="none" stroke-width="2"/></svg></summary>
+<div class="stage-body">
+
+<h4>502 Bad Gateway</h4>
+<div class="err-item sol"><span class="ico">✓</span><span><code>sudo systemctl restart php8.3-fpm nginx</code></span></div>
+
+<h4>500 Internal Server Error</h4>
+<div class="err-item sol"><span class="ico">✓</span><span><code>tail -n 50 storage/logs/laravel.log</code> untuk detail penyebab.</span></div>
+
+<h4>Asset CSS/JS tidak termuat</h4>
+<div class="err-item sol"><span class="ico">✓</span><span>Pastikan <code>public/build/</code> ada isinya dan <code>APP_URL</code> sesuai domain sebenarnya.</span></div>
+
+<h4>npm run build gagal (out of memory)</h4>
+<div class="code-wrap"><pre>sudo fallocate -l 2G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab</pre></div>
+
+<h4>Database connection refused</h4>
+<div class="err-item sol"><span class="ico">✓</span><span>Cek <code>pg_hba.conf</code> dan <code>listen_addresses</code> di <code>postgresql.conf</code> agar mengizinkan koneksi dari IP VPS.</span></div>
+
+<h4>Sertifikat SSL tidak mau terpasang</h4>
+<div class="err-item sol"><span class="ico">✓</span><span>Pastikan DNS sudah benar mengarah ke VPS dan port 80 terbuka, lalu ulangi <code>certbot --nginx</code>.</span></div>
+</div>
+</details>
+
+<!-- T24 -->
+<details class="stage" id="t24">
+<summary><span class="stage-num">24</span> Checklist Deployment Final<span class="stage-loc">✅ Verifikasi Akhir</span><svg class="stage-caret" width="16" height="16" viewBox="0 0 16 16"><path d="M5 2l7 6-7 6" stroke="currentColor" fill="none" stroke-width="2"/></svg></summary>
+<div class="stage-body">
+<ul class="checklist">
+<li>User non-root (<code>sendy</code>) dipakai untuk operasional</li>
+<li>Firewall aktif, hanya port SSH/80/443 terbuka</li>
+<li>Repository berhasil di-clone (public/private sesuai kondisi Anda)</li>
+<li><code>.env</code> terkonfigurasi benar dan tidak ter-commit ke Git</li>
+<li>User PostgreSQL <code>sendy</code> dibuat tanpa buat database via CLI</li>
+<li>Database dibuat manual via pgAdmin dengan owner yang sesuai</li>
+<li>Koneksi Laravel ke database terverifikasi (read-only, tanpa migration)</li>
+<li><code>php artisan migrate</code> tidak pernah dijalankan</li>
+<li><code>composer install --no-dev</code> berhasil tanpa error</li>
+<li><code>npm run build</code> menghasilkan folder <code>public/build/</code></li>
+<li>Permission <code>storage/</code> & <code>bootstrap/cache/</code> benar</li>
+<li>Nginx aktif dan terkonfigurasi</li>
+<li>PHP-FPM aktif dan terhubung ke Nginx</li>
+<li>Queue worker aktif (jika project menggunakan queue)</li>
+<li>DNS domain mengarah ke IP VPS dengan benar</li>
+<li>SSL/HTTPS terpasang, redirect HTTP→HTTPS aktif</li>
+<li>Auto-renewal SSL terverifikasi</li>
+<li>Website bisa diakses penuh via HTTPS tanpa error</li>
+<li>Password database sudah diganti ke password kuat untuk production</li>
+<li>Sudah paham alur update aplikasi (git pull + rebuild)</li>
+</ul>
+</div>
+</details>
+
+</div>
+
+<footer>
+  BLUEPRINT DEPLOY GUIDE · Laravel 13 + Inertia + React → VPS Production · disusun untuk deployment manual dengan kontrol penuh atas database
+</footer>
+
+<script>
+document.querySelectorAll('.stage').forEach(function(d){
+  d.addEventListener('toggle', function(){});
+});
+</script>
+
+</body>
+</html>
